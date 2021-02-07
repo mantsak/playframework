@@ -1,91 +1,167 @@
+/*
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
+ */
+
 package javaguide.http;
 
-import play.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import play.ApplicationLoader;
+import play.BuiltInComponentsFromContext;
+import play.cache.AsyncCacheApi;
 import play.cache.Cached;
-import play.libs.F;
+import play.cache.caffeine.CaffeineCacheComponents;
+import play.core.j.MappedJavaHandlerComponents;
+import play.filters.components.NoHttpFiltersComponents;
 import play.libs.Json;
+import play.libs.typedmap.TypedKey;
 import play.mvc.*;
+import play.routing.Router;
 
+import javax.inject.Inject;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.concurrent.CompletionStage;
 
-/**
- *
- */
 public class JavaActionsComposition extends Controller {
 
-    // #verbose-action
-    public class VerboseAction extends play.mvc.Action.Simple {
-        public F.Promise<Result> call(Http.Context ctx) throws Throwable {
-            Logger.info("Calling action for " + ctx);
-            return delegate.call(ctx);
-        }
-    }
-    // #verbose-action
+  private static final Logger log = LoggerFactory.getLogger(JavaActionsComposition.class);
 
-    // #verbose-index
-    @With(VerboseAction.class)
-    public Result verboseIndex() {
-        return ok("It works!");
+  // #verbose-action
+  public class VerboseAction extends play.mvc.Action.Simple {
+    public CompletionStage<Result> call(Http.Request req) {
+      log.info("Calling action for {}", req);
+      return delegate.call(req);
     }
-    // #verbose-index
+  }
+  // #verbose-action
 
-    // #authenticated-cached-index
-    @Security.Authenticated
-    @Cached(key = "index.result")
-    public Result authenticatedCachedIndex() {
-        return ok("It works!");
+  // #verbose-index
+  @With(VerboseAction.class)
+  public Result verboseIndex() {
+    return ok("It works!");
+  }
+  // #verbose-index
+
+  // #authenticated-cached-index
+  @Security.Authenticated
+  @Cached(key = "index.result")
+  public Result authenticatedCachedIndex() {
+    return ok("It works!");
+  }
+  // #authenticated-cached-index
+
+  // #verbose-annotation
+  @With(VerboseAnnotationAction.class)
+  @Target({ElementType.TYPE, ElementType.METHOD})
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface VerboseAnnotation {
+    boolean value() default true;
+  }
+  // #verbose-annotation
+
+  // #verbose-annotation-index
+  @VerboseAnnotation(false)
+  public Result verboseAnnotationIndex() {
+    return ok("It works!");
+  }
+  // #verbose-annotation-index
+
+  // #verbose-annotation-action
+  public class VerboseAnnotationAction extends Action<VerboseAnnotation> {
+    public CompletionStage<Result> call(Http.Request req) {
+      if (configuration.value()) {
+        log.info("Calling action for {}", req);
+      }
+      return delegate.call(req);
     }
-    // #authenticated-cached-index
+  }
+  // #verbose-annotation-action
 
-    // #verbose-annotation
-    @With(VerboseAnnotationAction.class)
-    @Target({ElementType.TYPE, ElementType.METHOD})
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface VerboseAnnotation {
-        boolean value() default true;
+  static class User {
+    public static User findById(Integer id) {
+      return new User();
     }
-    // #verbose-annotation
+  }
 
-    // #verbose-annotation-index
-    @VerboseAnnotation(false)
-    public Result verboseAnnotationIndex() {
-        return ok("It works!");
+  // #pass-arg-action
+  // ###replace: public class Attrs {
+  static class Attrs {
+    public static final TypedKey<User> USER = TypedKey.<User>create("user");
+  }
+
+  public class PassArgAction extends play.mvc.Action.Simple {
+    public CompletionStage<Result> call(Http.Request req) {
+      return delegate.call(req.addAttr(Attrs.USER, User.findById(1234)));
     }
-    // #verbose-annotation-index
+  }
+  // #pass-arg-action
 
-    // #verbose-annotation-action
-    public class VerboseAnnotationAction extends Action<VerboseAnnotation> {
-        public F.Promise<Result> call(Http.Context ctx) throws Throwable {
-            if (configuration.value()) {
-                Logger.info("Calling action for " + ctx);
-            }
-            return delegate.call(ctx);
-        }
+  // #pass-arg-action-index
+  @With(PassArgAction.class)
+  public static Result passArgIndex(Http.Request request) {
+    User user = request.attrs().get(Attrs.USER);
+    return ok(Json.toJson(user));
+  }
+  // #pass-arg-action-index
+
+  // #annotated-controller
+  @Security.Authenticated
+  public class Admin extends Controller {
+    /// ###insert: ...
+
+  }
+  // #annotated-controller
+
+  // #action-composition-dependency-injection-annotation
+  @With(MyOwnCachedAction.class)
+  @Target({ElementType.TYPE, ElementType.METHOD})
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface WithCache {
+    String key();
+  }
+  // #action-composition-dependency-injection-annotation
+
+  // #action-composition-dependency-injection
+  public class MyOwnCachedAction extends Action<WithCache> {
+
+    private final AsyncCacheApi cacheApi;
+
+    @Inject
+    public MyOwnCachedAction(AsyncCacheApi cacheApi) {
+      this.cacheApi = cacheApi;
     }
-    // #verbose-annotation-action
 
-    static class User {
-        public static Integer findById(Integer id) { return id; }
+    @Override
+    public CompletionStage<Result> call(Http.Request req) {
+      return cacheApi.getOrElseUpdate(configuration.key(), () -> delegate.call(req));
+    }
+  }
+  // #action-composition-dependency-injection
+
+  // #action-composition-compile-time-di
+  public class MyComponents extends BuiltInComponentsFromContext
+      implements NoHttpFiltersComponents, CaffeineCacheComponents {
+
+    public MyComponents(ApplicationLoader.Context context) {
+      super(context);
     }
 
-    // #pass-arg-action
-    public class PassArgAction extends play.mvc.Action.Simple {
-        public F.Promise<Result> call(Http.Context ctx) throws Throwable {
-            ctx.args.put("user", User.findById(1234));
-            return delegate.call(ctx);
-        }
+    @Override
+    public Router router() {
+      return Router.empty();
     }
-    // #pass-arg-action
 
-    // #pass-arg-action-index
-    @With(PassArgAction.class)
-    public static Result passArgIndex() {
-        Object user = ctx().args.get("user");
-        return ok(Json.toJson(user));
+    @Override
+    public MappedJavaHandlerComponents javaHandlerComponents() {
+      return super.javaHandlerComponents()
+          // Add action that does not depends on any other component
+          .addAction(VerboseAction.class, VerboseAction::new)
+          // Add action that depends on the cache api
+          .addAction(MyOwnCachedAction.class, () -> new MyOwnCachedAction(defaultCacheApi()));
     }
-    // #pass-arg-action-index
-
+  }
+  // #action-composition-compile-time-di
 }

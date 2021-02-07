@@ -1,4 +1,4 @@
-<!--- Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com> -->
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
 # Testing web service clients
 
 A lot of code can go into writing a web service client - preparing the request, serializing and deserializing the bodies, setting the correct headers.  Since a lot of this code works with strings and weakly typed maps, testing it is very important.  However testing it also presents some challenges.  Some common approaches include:
@@ -17,7 +17,7 @@ This approach gives the least confidence in the test code - often this kind of t
 
 ### Mock the web service
 
-This approach is a good compromise between testing against the actual web service and mocking the http client.  Your tests will show that all the requests it makes are valid HTTP requests, that serialisation/deserialisation of bodies work, etc, but they will be entirely self contained, not depending on any third party services.
+This approach is a good compromise between testing against the actual web service and mocking the http client.  Your tests will show that all the requests it makes are valid HTTP requests, that serialization/deserialization of bodies work, etc, but they will be entirely self contained, not depending on any third party services.
 
 Play provides some helper utilities for mocking a web service in tests, making this approach to testing a very viable and attractive option.
 
@@ -33,7 +33,7 @@ To test this, we want an embedded Play server that will implement this endpoint.
 
 @[mock-service](code/javaguide/tests/JavaTestingWebServiceClients.java)
 
-Our server is now running on a random port, that we can access through the `httpPort` method.  We could build the base URL to pass to the `GitHubClient` using this, however Play has an even simpler mechanism.  The [`WS`](api/java/play/libs/ws/WS.html) class provides a `newClient` method that takes in a port number.  When requests are made using the client to relative URLs, eg to `/repositories`, this client will send that request to localhost on the passed in port.  This means we can set a base URL on the `GitHubClient` to `""`.  It also means if the client returns resources with URL links to other resources that the client then uses to make further requests, we can just ensure those a relative URLs and use them as is.
+Our server is now running on a random port, that we can access through the `httpPort` method.  We could build the base URL to pass to the `GitHubClient` using this, however Play has an even simpler mechanism.  The [`WSTestClient`](api/java/play/test/WSTestClient.html) class provides a `newClient` method that takes in a port number.  When requests are made using the client to relative URLs, eg to `/repositories`, this client will send that request to localhost on the passed in port.  This means we can set a base URL on the `GitHubClient` to `""`.  It also means if the client returns resources with URL links to other resources that the client then uses to make further requests, we can just ensure those a relative URLs and use them as is.
 
 So now we can create a server, WS client and `GitHubClient` in a `@Before` annotated method, and shut them down in an `@After` annotated method, and then we can test the client in our tests:
 

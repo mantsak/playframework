@@ -1,9 +1,10 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
+
 package javaguide.akka;
 
 public class ConfiguredActorProtocol {
 
-    public static class GetConfig {}
+  public static class GetConfig {}
 }

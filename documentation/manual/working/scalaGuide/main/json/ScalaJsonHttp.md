@@ -1,4 +1,4 @@
-<!--- Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com> -->
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
 # JSON with HTTP
 
 Play supports HTTP requests and responses with a content type of JSON by using the HTTP API in combination with the JSON library.
@@ -33,7 +33,7 @@ The last step is to add a route for our `Action` in `conf/routes`:
 GET   /places               controllers.Application.listPlaces
 ```
 
-We can test the action by making a request with a browser or HTTP tool. This example uses the unix command line tool [cURL](http://curl.haxx.se/).
+We can test the action by making a request with a browser or HTTP tool. This example uses the unix command line tool [cURL](https://curl.haxx.se/).
 
 ```
 curl --include http://localhost:9000/places
@@ -43,7 +43,7 @@ Response:
 
 ```
 HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Content-Length: 141
 
 [{"name":"Sandleford","location":{"lat":51.377797,"long":-1.318965}},{"name":"Watership Down","location":{"lat":51.235685,"long":-1.309197}}]
@@ -62,10 +62,14 @@ Next we'll define the `Action`.
 This `Action` is more complicated than our list case. Some things to note:
 
 - This `Action` expects a request with a `Content-Type` header of `text/json` or `application/json` and a body containing a JSON representation of the entity to create.
-- It uses a JSON specific `BodyParser` will parse the request and provide `request.body` as a `JsValue`. 
+- It uses a JSON specific `BodyParser` which will [[parse the request|ScalaBodyParsers]] and provide `request.body` as a `JsValue`. 
 - We used the `validate` method for conversion which will rely on our implicit `Reads[Place]`.
 - To process the validation result, we used a `fold` with error and success flows. This pattern may be familiar as it is also used for [[form submission|ScalaForms]].
 - The `Action` also sends JSON responses.
+
+Body parsers can be typed with a case class, an explicit `Reads` object or take a function. So we can offload even more of the work onto Play to make it automatically parse JSON to a case class and [[validate|ScalaJsonCombinators#Validation-with-Reads]] it before even calling our `Action`:
+
+@[handle-json-bodyparser-concise](code/ScalaJsonHttpSpec.scala)
 
 Finally we'll add a route binding in `conf/routes`:
 
@@ -89,10 +93,10 @@ Response:
 
 ```
 HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Content-Length: 57
 
-{"status":"OK","message":"Place 'Nuthanger Farm' saved."}
+{"message":"Place 'Nuthanger Farm' saved."}
 ```
 
 Testing the action with a invalid data, missing "name" field:
@@ -108,10 +112,10 @@ Response:
 
 ```
 HTTP/1.1 400 Bad Request
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Content-Length: 79
 
-{"status":"KO","message":{"obj.name":[{"msg":"error.path.missing","args":[]}]}}
+{"message":{"obj.name":[{"msg":"error.path.missing","args":[]}]}}
 ```
 Testing the action with a invalid data, wrong data type for "lat":
 
@@ -126,10 +130,10 @@ Response:
 
 ```
 HTTP/1.1 400 Bad Request
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Content-Length: 92
 
-{"status":"KO","message":{"obj.location.lat":[{"msg":"error.expected.jsnumber","args":[]}]}}
+{"message":{"obj.location.lat":[{"msg":"error.expected.jsnumber","args":[]}]}}
 ```
 
 ## Summary

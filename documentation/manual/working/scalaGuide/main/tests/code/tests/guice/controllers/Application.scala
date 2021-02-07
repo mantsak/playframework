@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
+
 package scalaguide.tests.guice
 package controllers
 
@@ -8,7 +9,7 @@ package controllers
 import play.api.mvc._
 import javax.inject.Inject
 
-class Application @Inject() (component: Component) extends Controller {
+class Application @Inject() (component: Component, cc: ControllerComponents) extends AbstractController(cc) {
   def index() = Action {
     Ok(component.hello)
   }

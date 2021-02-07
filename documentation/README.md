@@ -1,7 +1,9 @@
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
 # Build documentation
 
-This is the Play documentation project.  It does not build with the rest of the Play projects, and uses its own sbt
-project instead.
+This is the README for the Play documentation project.  The documentation project does not build with the rest of the Play projects, and uses its own sbt setup instead.  Please refer to the [main README file](../README.md) for how to build Play in general and how to [contribute](../CONTRIBUTING.md).
+
+If you are completely lost and want to run Play for the first time, go to the [download page](https://www.playframework.com/download) and pick out a starter project: the starter projects are explicitly written for new users and are the best place to start.
 
 ## Dependencies
 
@@ -35,24 +37,26 @@ And this code snippet is included in the generated documentation.
 
 Any directory under /manual called "code" is treated as a root of a test directory.  You can put configuration files, Java files, or Scala files in there.  Source files do not have to be part of a test suite, but it is highly encouraged to ensure that all included code snippets can compile and pass some internal checks.
 
+All documentation code samples must be adequately namespaced.  For example, no code samples should ever create a class called "controllers.Application", nor should any code samples ever create a routes file called "routes", they should instead namespace them, eg something like "javaguide.async.routes".
+
+For more information, please see the [Play documentation guidelines](https://www.playframework.com/documentation/latest/Documentation).
+
 ## IDE integration
 
-There is no out of the box integration, but you can use the [sbt-idea](https://github.com/mpeltonen/sbt-idea) plugin or the [Eclipse](https://github.com/typesafehub/sbteclipse) plugin to generate a project for you.
-
-NOTE: if you use sbt-idea, the generated project defines "com.typesafe.play" and other libraries as "runtime" and so does not expose the included libraries to the IDE.  Setting them to "test" manually makes everything work.
+There is no out of the box integration, but you can use IntelliJ IDEA's [Scala plugin](http://blog.jetbrains.com/scala/) or the [Eclipse](https://github.com/typesafehub/sbteclipse) plugin to generate a project for you.  If you are using IntelliJ IDEA, the [Markdown Support](https://www.jetbrains.com/help/idea/markdown.html) plugin will make editing documentation much easier.
 
 ## Testing
 
-Before you run the tests make sure you have the latest snapshot version of the play library in your local repository. This can be achieved through:
+Before you run the tests make sure you have the latest snapshot version of the Play library in your local repository. This can be achieved through:
 
 ```
-(cd ../framework && ./build publishLocal)
+(cd .. && sbt publishLocal)
 ```
 
 You can run the test suite for the documentation using:
 
 ```
-./build
+sbt
 > test
 ```
 
@@ -61,27 +65,25 @@ You can run the test suite for the documentation using:
 You can validate the integrity of the documentation internal links by calling:
 
 ```
-./build
+sbt
 > validateDocs
 ```
 
 To validate the availability of the external links use:
 
 ```
-./build
+sbt
 > validateExternalLinks
 ```
 
 ## Packaging
 
-There is no distinct packaging of HTML files in the project.  Instead, the main project has a `/project/Docs` SBT file that will package the documentation with the rest of the application.
+There is no distinct packaging of HTML files in the project.  Instead, the main project has a `/project/Docs` sbt file that will package the documentation with the rest of the application.
 
 ```
-cd $PLAY_HOME/framework
-./build compile doc package
+cd $PLAY_HOME
+sbt compile doc package
 ```
-
-All Play projects can see documentation embedded by going to [http://localhost:9000/@documentation](http://localhost:9000/@documentation).  Internally, the @documentation route goes to `DocumentationServer` in the play-docs subproject, which relies on [play-doc](https://github.com/playframework/play-doc] for generating HTML from the raw Markdown.  
 
 ## Running
 
@@ -89,5 +91,5 @@ You can run a built-in documentation server directly from the documentation proj
 
 ```
 cd documentation
-./build run
+sbt run
 ```

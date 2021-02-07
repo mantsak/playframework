@@ -1,9 +1,9 @@
-<!--- Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com> -->
-# Messages and internationalization
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
+# Internationalization with Messages
 
 ## Specifying languages supported by your application
 
-A valid language code is specified by a valid **ISO 639-2 language code**, optionally followed by a valid **ISO 3166-1 alpha-2 country code**, such as `fr` or `en-US`.
+You specify languages for your application using language tags, specially formatted strings that identify a specific language. Language tags can specify simple languages, such as "en" for English, a specific regional dialect of a language (such as "en-AU" for English as used in Australia), a language and a script (such as "az-Latn" for Azerbaijani written in Latin script), or a combination of several of these (such as "zh-cmn-Hans-CN" for Chinese, Mandarin, Simplified script, as used in China).
 
 To start you need to specify the languages supported by your application in the `conf/application.conf` file:
 
@@ -11,29 +11,101 @@ To start you need to specify the languages supported by your application in the 
 play.i18n.langs = [ "en", "en-US", "fr" ]
 ```
 
+These language tags will be used to create [`play.api.i18n.Lang`](api/scala/play/api/i18n/Lang.html) instances. To access the languages supported by your application, you can inject a [`play.api.i18n.Langs`](api/scala/play/api/i18n/Langs.html) component into your class:
+
+@[inject-langs](code/scalaguide/i18n/ScalaI18nService.scala)
+
+An individual [`play.api.i18n.Lang`](api/scala/play/api/i18n/Lang.html) can be converted to a [`java.util.Locale`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html) object by using `lang.toLocale`:
+
+@[lang-to-locale](code/scalaguide/i18n/ScalaI18nService.scala)
+
 ## Externalizing messages
 
 You can externalize messages in the `conf/messages.xxx` files.
 
 The default `conf/messages` file matches all languages. Additionally you can specify language-specific message files such as `conf/messages.fr` or `conf/messages.en-US`.
 
-You can then retrieve messages using the `play.api.i18n.Messages` object:
+Messages are available through the [`MessagesApi`](api/scala/play/api/i18n/MessagesApi.html) instance, which can be added via injection.  You can then retrieve messages using the [`play.api.i18n.MessagesApi`](api/scala/play/api/i18n/MessagesApi.html) object:
 
-```scala
-val title = Messages("home.title")
-```
+@[inject-messages-api](code/scalaguide/i18n/ScalaI18nService.scala)
 
-All internationalization API calls take an implicit `play.api.i18n.Messages` argument retrieved from the current scope. This implicit value contains both the language to use and (essentially) the internationalized messages.
+You can also make the language implicit rather than declare it:
 
-The simplest way to get such an implicit value is to use the `I18nSupport` trait. For instance you can use it as follows in your controllers:
+@[use-implicit-lang](code/scalaguide/i18n/ScalaI18nService.scala)
+
+Play provides predefined messages for forms validation.  You can overwrite these messages either with the default message file or any language-specific message file. You can see below which messages can be overwritten:
+
+@[](/confs/play/messages.default)
+
+## Using Messages and MessagesProvider
+
+Because it's common to want to use messages without having to provide an argument, you can wrap a given `Lang` together with the [`MessagesApi`](api/scala/play/api/i18n/MessagesApi.html) to create a [`play.api.i18n.Messages`](api/scala/play/api/i18n/MessagesImpl.html) instance.  The [`play.api.i18n.MessagesImpl`](api/scala/play/api/i18n/MessagesImpl.html) case class implements the [`Messages`](api/scala/play/api/i18n/Messages.html) trait if you want to create one directly:
+
+@[using-messages-impl](code/scalaguide/i18n/ScalaI18nService.scala)
+
+You can also use Singleton object methods with an implicit [`play.api.i18n.MessagesProvider`](api/scala/play/api/i18n/MessagesProvider.html):
+
+@[using-implicit-messages-provider](code/scalaguide/i18n/ScalaI18nService.scala)
+
+A [`play.api.i18n.MessagesProvider`](api/scala/play/api/i18n/MessagesProvider.html) is a trait that can provide a [`Messages`](api/scala/play/api/i18n/Messages.html) object on demand.  An instance of [`Messages`](api/scala/play/api/i18n/Messages.html) extends [`MessagesProvider`](api/scala/play/api/i18n/MessagesProvider.html) and returns itself.
+  
+[`MessagesProvider`](api/scala/play/api/i18n/MessagesProvider.html) is most useful when extended by something that is not a `Messages`:
+
+@[custom-message-provider](code/scalaguide/i18n/ScalaI18nService.scala)
+
+## Using Messages with Controllers
+
+You can add [`Messages`](api/scala/play/api/i18n/Messages.html) support to your request by extending [`MessagesAbstractController`](api/scala/play/api/mvc/MessagesAbstractController.html) or [`MessagesBaseController`](api/scala/play/api/mvc/MessagesBaseController.html):
+ 
+@[i18n-messagescontroller](code/ScalaI18N.scala)
+ 
+Or by adding the [`play.api.i18n.I18nSupport`](api/scala/play/api/i18n/I18nSupport.html) trait to your controller and ensuring an instance of [`MessagesApi`](api/scala/play/api/i18n/MessagesApi.html) is in scope, which will use implicits to convert a request.
 
 @[i18n-support](code/ScalaI18N.scala)
 
-The `I18nSupport` trait gives you an implicit `Messages` value as long as there is a `Lang` or a `RequestHeader` in the implicit scope.
+All the form helpers in Twirl templates take [`MessagesProvider`](api/scala/play/api/i18n/MessagesProvider.html), and it is assumed that a [`MessagesProvider`](api/scala/play/api/i18n/MessagesProvider.html) is passed into the template as an implicit parameter when processing a form.  
 
-> **Note:** If you have a `RequestHeader` in the implicit scope, it will use the preferred language extracted from the `Accept-Language` header and matching one of the `MessagesApi` supported languages. You should add a `Messages` implicit parameter to your template like this: `@()(implicit messages: Messages)`.
+```twirl
+@(form: Form[Foo])(implicit messages: MessagesProvider)
 
-> **Note:** Also, Play “knows” out of the box how to inject a `MessagesApi` value (that uses the `DefaultMessagesApi` implementation), so you can just annotate your controller with the `@javax.inject.Inject` annotation and let Play automatically wire the components for you.
+@helper.inputText(field = form("name")) @* <- takes MessagesProvider *@
+```
+
+### Retrieving supported language from an HTTP request
+
+You can retrieve the languages supported by a specific HTTP request:
+
+@[http-supported-langs](code/scalaguide/i18n/ScalaI18nService.scala)
+
+### Request Types
+
+The [`I18nSupport`](api/scala/play/api/i18n/I18nSupport.html) trait adds the following methods to a [`Request`](api/scala/play/api/mvc/Request.html):
+
+* `request.messages` returns an instance of `Messages`, using an implicit `MessagesApi` 
+* `request.lang` returns the preferred `Lang`, using an implicit `MessagesApi` 
+
+The preferred language is extracted from the `Accept-Language` header (and optionally the language cookie) and matching one of the [`MessagesApi`](api/scala/play/api/i18n/MessagesApi.html) supported languages using `messagesApi.preferred`.
+
+### Language Cookie Support
+
+The [`I18nSupport`](api/scala/play/api/i18n/I18nSupport.html) also adds two convenient methods to `Result`:
+
+* `result.withLang(lang: Lang)` is used to set the language using Play's language cookie. 
+* `result.withoutLang` is used to clear the language cookie.
+
+For example:
+
+@[lang-cookies](code/scalaguide/i18n/ScalaI18nService.scala)
+
+The `withLang` method sets the cookie named `PLAY_LANG` for future requests, while withoutLang discards the cookie, and Play will choose the language based on the client's Accept-Language header.
+
+The cookie name can be changed by changing the configuration parameter: `play.i18n.langCookieName`.
+
+## Implicit Lang Conversion
+
+The [`LangImplicits`](api/scala/play/api/i18n/LangImplicits.html) trait can be declared on a controller to implicitly convert a request to a `Messages` given an implicit `Lang` instance.
+
+@[using-lang-implicits-trait](code/scalaguide/i18n/ScalaI18nService.scala)
 
 ## Messages format
 
@@ -63,12 +135,8 @@ you should expect the following results:
 @[apostrophe-messages](code/ScalaI18N.scala)
 @[parameter-escaping](code/ScalaI18N.scala)
 
-## Retrieving supported language from an HTTP request
+## Explicit MessagesApi
 
-You can retrieve the languages supported by a specific HTTP request:
+The default implementation of [`MessagesApi`](api/scala/play/api/i18n/MessagesApi.html) is [`DefaultMessagesApi`](api/scala/play/api/i18n/DefaultMessagesApi.html).  You can see [[unit testing|ScalaTestingWithSpecs2#Unit-Testing-Messages]] and [[functional testing|ScalaFunctionalTestingWithSpecs2#Testing-Messages-API]] examples in the testing section of the documentation.
 
-```scala
-def index = Action { request =>
-  Ok("Languages: " + request.acceptLanguages.map(_.code).mkString(", "))
-}
-```
+You can also use [`Helpers.stubMessagesApi()`](api/scala/play/api/test/Helpers$.html#stubMessagesApi\(messages:Map[String,Map[String,String]],langs:play.api.i18n.Langs,langCookieName:String,langCookieSecure:Boolean,langCookieHttpOnly:Boolean,langCookieSameSite:Option[play.api.mvc.Cookie.SameSite],httpConfiguration:play.api.http.HttpConfiguration,langCookieMaxAge:Option[Int]\):play.api.i18n.MessagesApi) in testing to provide a premade empty [`MessagesApi`](api/scala/play/api/i18n/MessagesApi.html).

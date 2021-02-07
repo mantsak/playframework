@@ -1,7 +1,7 @@
-<!--- Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com> -->
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
 # Handling and serving JSON
 
-In Java, Play uses the [Jackson](http://jackson.codehaus.org/) JSON library to convert objects to and from JSON. Play's actions work with the `JsonNode` type and the framework provides utility methods for conversion in the `play.libs.Json` API.
+In Java, Play uses the [Jackson](https://github.com/FasterXML/jackson#documentation) JSON library to convert objects to and from JSON. Play's actions work with the `JsonNode` type and the framework provides utility methods for conversion in the `play.libs.Json` API.
 
 ## Mapping Java objects to JSON
 
@@ -25,13 +25,15 @@ By default an action uses an **any content** body parser, which you can use to r
 
 @[json-request-as-anycontent](code/javaguide/json/JavaJsonActions.java)
 
+@[json-request-as-anyclazz](code/javaguide/json/JavaJsonActions.java)
+
 Of course it’s way better (and simpler) to specify our own `BodyParser` to ask Play to parse the content body directly as JSON:
 
 @[json-request-as-json](code/javaguide/json/JavaJsonActions.java)
 
 > **Note:** This way, a 400 HTTP response will be automatically returned for non JSON requests with Content-type set to application/json.
 
-You can test it with **cURL** from a command line:
+You can test it with **`curl`** from a command line:
 
 ```bash
 curl
@@ -70,10 +72,48 @@ You can also return a Java object and have it automatically serialized to JSON b
 
 @[json-response-dao](code/javaguide/json/JavaJsonActions.java)
 
+If you already have a JSON `String` that you'd like to return, you can do that as well:
+
+@[json-response-string](code/javaguide/json/JavaJsonActions.java)
+
 ## Advanced usage
 
-Because Play uses Jackson, you can use your own `ObjectMapper` to create `JsonNode`s. The [documentation for jackson-databind](https://github.com/FasterXML/jackson-databind/blob/master/README.md) explains how you can further customize JSON conversion process.
+There are two possible ways to customize the `ObjectMapper` for your application.
 
-If you would like to use Play's `Json` APIs (`toJson`/`fromJson`) with a customized `ObjectMapper`, you can add something like this in your `GlobalSettings#onStart`:
+### Configurations in `application.conf`
 
-@[custom-object-mapper](code/javaguide/json/JavaJsonActions.java)
+Because Play uses Akka Jackson serialization support, you can configure the `ObjectMapper` based on your application needs. The [documentation for jackson-databind Features](https://github.com/FasterXML/jackson-databind/wiki/JacksonFeatures) explains how you can further customize JSON conversion process, including [Mapper](https://github.com/FasterXML/jackson-databind/wiki/Mapper-Features), [Serialization](https://github.com/FasterXML/jackson-databind/wiki/Serialization-Features) and [Deserialization](https://github.com/FasterXML/jackson-databind/wiki/Deserialization-Features) features.
+
+If you would like to use Play's `Json` APIs (`toJson`/`fromJson`) with a customized `ObjectMapper`, you need to add the custom configurations in your `application.conf`. For example, if you want to add a new [module for Joda types](https://github.com/FasterXML/jackson-datatype-joda)
+
+```HOCON
+akka.serialization.jackson.play.jackson-modules += "com.fasterxml.jackson.datatype.joda.JodaModule"
+```
+
+Or to add set a serialization configuration:
+
+```HOCON
+akka.serialization.jackson.play.serialization-features.WRITE_NUMBERS_AS_STRINGS=true
+```
+
+### Custom binding for `ObjectMapper`
+
+If you still want to take completely over the `ObjectMapper` creation, this is possible by overriding its binding configuration. You first need to disable the default `ObjectMapper` module in your `application.conf`
+
+```HOCON
+play.modules.disabled += "play.core.ObjectMapperModule"
+```
+
+Then you can create a provider for your `ObjectMapper`:
+
+@[custom-java-object-mapper](code/javaguide/json/JavaJsonCustomObjectMapper.java)
+
+And bind it via Guice as an eager singleton so that the `ObjectMapper` will be set into the `Json` helper:
+
+@[custom-java-object-mapper2](code/javaguide/json/JavaJsonCustomObjectMapperModule.java)
+
+Afterwards enable the Module:
+
+```HOCON
+play.modules.enabled += "path.to.JavaJsonCustomObjectMapperModule"
+```

@@ -1,27 +1,16 @@
-<!--- Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com> -->
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
 # Artifact repositories
 
-## Typesafe repository
+## Maven Central
 
-All Play artifacts are published to the Typesafe repository at <https://repo.typesafe.com/typesafe/releases/>.
+All Play artifacts are published to the [Maven Central](https://search.maven.org/) at <https://repo1.maven.org/maven2/com/typesafe/play/>.
 
-> **Note:** it's a Maven2 compatible repository.
+This repository is enabled by default in your project, so you don't need to manually add it.
 
-To enable it in your sbt build, you must add a proper resolver (typically in `plugins.sbt`):
+## Accessing nightly snapshots
 
-```scala
-// The Typesafe repository
-resolvers += "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/"
-```
-
-## Accessing snapshots
-
-Snapshots are published daily from our [[Continuous Integration Server|ThirdPartyTools]] to the Typesafe snapshots repository at <https://repo.typesafe.com/typesafe/snapshots/>.
-
-> **Note:** it's an ivy style repository.
+Nightly snapshots are published to the Sonatype snapshots repository. You can [browse the play directory to find the version of the sbt-plugin you'd like to use](https://oss.sonatype.org/content/repositories/snapshots/com/typesafe/play/sbt-plugin_2.12_1.0/) in your `plugins.sbt`. To enable the snapshots repo in your build, you must add a resolver (typically in `plugins.sbt`):
 
 ```scala
-// The Typesafe snapshots repository
-resolvers += Resolver.url("Typesafe Ivy Snapshots Repository", url("https://repo.typesafe.com/typesafe/ivy-snapshots"))(Resolver.ivyStylePatterns)
+resolvers += Resolver.sonatypeRepo("snapshots")
 ```
-

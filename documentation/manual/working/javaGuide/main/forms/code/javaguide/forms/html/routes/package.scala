@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
+
 package javaguide.forms.html
 
 package object routes {

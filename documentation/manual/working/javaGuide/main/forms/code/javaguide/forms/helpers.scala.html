@@ -1,8 +1,8 @@
-@(myForm: Form[User], userForm: Form[UserForm])
+@(myForm: play.data.Form[User], userForm: Form[UserForm])(implicit messages: play.i18n.Messages)
 
 <span class="form">
 @* #form *@
-@helper.form(action = routes.Application.submit()) {
+@helper.form(action = routes.Application.submit) {
 
 }
 @* #form *@
@@ -10,7 +10,7 @@
 
 <span class="form-with-id">
 @* #form-with-id *@
-@helper.form(action = routes.Application.submit(), 'id -> "myForm") {
+@helper.form(action = routes.Application.submit, Symbol("id") -> "myForm") {
 
 }
 @* #form-with-id *@
@@ -18,7 +18,7 @@
 
 <span class="extra-params">
 @* #extra-params *@
-@helper.inputText(myForm("email"), 'id -> "email", 'size -> 30)
+@helper.inputText(myForm("email"), Symbol("id") -> "email", Symbol("size") -> 30)
 @* #extra-params *@
 </span>
 
@@ -40,4 +40,14 @@
 
 }
 @* #repeat *@
+</span>
+
+<span class="repeat-with-index">
+@* #repeat-with-index *@
+@helper.repeatWithIndex(userForm("emails"), min = 1) { (emailField, index) =>
+
+    @helper.inputText(emailField, Symbol("_label") -> ("email #" + index))
+
+}
+@* #repeat-with-index *@
 </span>

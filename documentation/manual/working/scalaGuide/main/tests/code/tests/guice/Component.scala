@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
+
 package scalaguide.tests.guice
 
 // #component
@@ -18,7 +19,8 @@ class MockComponent extends Component {
 // #component
 
 // #component-module
-import play.api.{ Environment, Configuration }
+import play.api.Environment
+import play.api.Configuration
 import play.api.inject.Module
 
 class ComponentModule extends Module {

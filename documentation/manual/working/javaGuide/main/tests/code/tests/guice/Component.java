@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
+
 package javaguide.tests.guice;
 
 // #component
 public interface Component {
-    String hello();
+  String hello();
 }
 // #component

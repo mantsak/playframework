@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
-//#controller
-//###replace: package controllers;
+
+// #controller
+// ###replace: package controllers;
 package javaguide.http.routing.reverse.controllers;
 
 import play.*;
@@ -10,9 +11,8 @@ import play.mvc.*;
 
 public class Application extends Controller {
 
-    public Result hello(String name) {
-        return ok("Hello " + name + "!");
-    }
-
+  public Result hello(String name) {
+    return ok("Hello " + name + "!");
+  }
 }
-//#controller
+// #controller

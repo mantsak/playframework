@@ -1,25 +1,43 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
+
 package javaguide.forms
 
-import play.api.test.{WithApplication, PlaySpecification}
-import play.data.Form
-import javaguide.forms.html.{UserForm, User}
+import play.api.Application
+import play.api.test.PlaySpecification
+import play.api.test.WithApplication
+import javaguide.forms.html.User
+import javaguide.forms.html.UserForm
+
 import java.util
 
-object JavaFormHelpers extends PlaySpecification {
+import play.mvc.Http
 
+class JavaFormHelpers extends PlaySpecification {
   "java form helpers" should {
+    def withFormFactory[A](block: (play.data.FormFactory, play.i18n.Messages) => A)(implicit app: Application): A = {
+      val requestBuilder = new Http.RequestBuilder()
+      val request        = requestBuilder.build()
+      val formFactory    = app.injector.instanceOf[play.data.FormFactory]
+      val messagesApi    = app.injector.instanceOf[play.i18n.MessagesApi]
+      block(formFactory, messagesApi.preferred(request))
+    }
     {
-      val form = Form.form(classOf[User])
-      val u = new UserForm
-      u.setName("foo")
-      u.setEmails(util.Arrays.asList("a@a", "b@b"))
-      val userForm = Form.form(classOf[UserForm]).fill(u)
-      def segment(name: String) = {
-        val body = html.helpers(form, userForm).body
-        body.lines.dropWhile(_ != "<span class=\"" + name + "\">").drop(1).takeWhile(_ != "</span>").mkString("\n")
+      def segment(name: String)(implicit app: Application) = {
+        withFormFactory { (formFactory: play.data.FormFactory, messages: play.i18n.Messages) =>
+          val form = formFactory.form(classOf[User])
+          val u    = new UserForm
+          u.setName("foo")
+          u.setEmails(util.Arrays.asList("a@a", "b@b"))
+          val userForm = formFactory.form(classOf[UserForm]).fill(u)
+          val body     = html.helpers(form, userForm)(messages).body
+          body.linesIterator
+            .dropWhile(_ != "<span class=\"" + name + "\">")
+            .drop(1)
+            .takeWhile(_ != "</span>")
+            .mkString("\n")
+        }
       }
 
       "allow rendering a form" in new WithApplication() {
@@ -49,23 +67,23 @@ object JavaFormHelpers extends PlaySpecification {
 
     {
       "allow rendering input fields" in new WithApplication() {
-        val form = Form.form(classOf[User])
-        val body = html.fullform(form).body
-        body must contain("""type="text"""")
-        body must contain("""type="password"""")
-        body must contain("""name="email"""")
-        body must contain("""name="password"""")
+        withFormFactory { (formFactory: play.data.FormFactory, messages: play.i18n.Messages) =>
+          val form = formFactory.form(classOf[User])
+          val body = html.fullform(form)(messages).body
+          body must contain("""type="text"""")
+          body must contain("""type="password"""")
+          body must contain("""name="email"""")
+          body must contain("""name="password"""")
+        }
       }
 
       "allow custom field constructors" in new WithApplication() {
-        val form = Form.form(classOf[User])
-        val body = html.withFieldConstructor(form).body
-        body must contain("foobar")
+        withFormFactory { (formFactory: play.data.FormFactory, messages: play.i18n.Messages) =>
+          val form = formFactory.form(classOf[User])
+          val body = html.withFieldConstructor(form)(messages).body
+          body must contain("foobar")
+        }
       }
-
     }
-
   }
-
-
 }

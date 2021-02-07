@@ -1,4 +1,4 @@
 @* #template *@
-@import play.i18n._
-@Messages.get("hello")
+@(messages: play.i18n.Messages)
+@messages.at("hello")
 @* #template *@

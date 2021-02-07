@@ -1,26 +1,21 @@
-package javaguide.tests;
+/*
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
+ */
 
-import java.util.HashMap;
-import java.util.Map;
+package javaguide.tests;
 
 import org.junit.*;
 
-import play.mvc.*;
 import play.test.*;
-import play.libs.F.*;
-import play.libs.ws.*;
-
-import static play.test.Helpers.*;
 import static org.junit.Assert.*;
 
 // #test-withbrowser
 public class BrowserFunctionalTest extends WithBrowser {
 
-    @Test
-    public void runInBrowser() {
-        browser.goTo("/");
-        assertNotNull(browser.$("title").getText());
-    }
-
+  @Test
+  public void runInBrowser() {
+    browser.goTo("/");
+    assertNotNull(browser.el("title").text());
+  }
 }
 // #test-withbrowser

@@ -1,14 +1,6 @@
-<!--- Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com> -->
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
 
 # Play User Groups
-
-## New York
-
-http://www.meetup.com/Play-NYC/
-
-## Berlin
-
-http://www.meetup.com/Play-Berlin-Brandenburg/
 
 ## Cologne
 
@@ -18,32 +10,26 @@ http://www.meetup.com/Play-Berlin-Brandenburg/
 
 [Xing](https://www.xing.com/communities/groups/scala-user-group-koeln-bonn-1035441) / [Twitter](https://twitter.com/scalacgn)
 
-## Buenos Aires
+## Vienna - AUSTRIA
 
-http://www.meetup.com/play-argentina/
-
-## Stockholm
-
-http://www.meetup.com/play-stockholm/
+<https://www.meetup.com/PlayFramework-Wien/>
 
 ## Belgium
 
-http://www.play-be.org
+<https://groups.google.com/forum/#!forum/play-be>
 
 ## Japan
 
-* http://www.playframework-ja.org/
-* https://groups.google.com/forum/?fromgroups#!forum/play_ja
+<https://groups.google.com/forum/?fromgroups#!forum/play_ja>
 
-## Republic of Korea 
+## Republic of Korea
 
-#### Korea Play! User Group
+### Korea Play! User Group
 
 * [Facebook](https://www.facebook.com/groups/playuser)
 * [Github](https://github.com/kpug)
 * [Slack](https://kpug.slack.com)
- 
+
 ## New Delhi - INDIA
 
-http://www.meetup.com/Reactive-Application-Programmers-in-Delhi-NCR/
-
+<https://www.meetup.com/Reactive-Application-Programmers-in-Delhi-NCR/>

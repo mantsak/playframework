@@ -1,4 +1,4 @@
-<!--- Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com> -->
+<!--- Copyright (C) Lightbend Inc. <https://www.lightbend.com> -->
 # Translating the Play Documentation
 
 Play 2.3+ provides infrastructure to aid documentation translators in translating the Play documentation and keeping it up to date.
@@ -9,19 +9,19 @@ In addition to this, Play also provides facilities for validating the integrity 
 
 ## Prerequisites
 
-You need to have `activator` or `sbt` installed.  It will also be very useful to have a clone of the Play repository, with the branch that you're translating checked out, so that you have something to copy to start with.
+You need to have [`sbt` installed](https://www.scala-sbt.org/download.html). It will also be very useful to have a clone of the Play repository, with the branch that you're translating checked out, so that you have something to copy to start with.
 
 If you're translating an unreleased version of the Play documentation, then you'll need to build that version of Play and publish it locally on your machine first.  This can be done by running:
 
 ```bash
-./build publishLocal
+sbt publishLocal
 ```
 
 in the `framework` directory of the Play project.
 
 ## Setting up a translation
 
-Create a new SBT project with the following structure:
+Create a new sbt project with the following structure:
 
 ```
 translation-project
@@ -36,10 +36,10 @@ translation-project
   `- build.sbt
 ```
 
-`build.properties` should contain the SBT version, ie:
+`build.properties` should contain the sbt version, ie:
 
 ```
-sbt.version=0.13.8
+sbt.version=0.13.16
 ```
 
 `plugins.sbt` should include the Play docs sbt plugin, ie:
@@ -58,7 +58,7 @@ Now you're ready to start translating!
 
 ## Translating documentation
 
-First off, start the documentation server.  The documentation server will serve your documentation up for you so you can see what it looks like as you're going.  To do this you'll need `sbt` or `activator` installed, either one is fine, in the examples here we'll be using `sbt`:
+First off, start the documentation server.  The documentation server will serve your documentation up for you so you can see what it looks like as you're going.
 
 ```bash
 $ sbt run
@@ -69,13 +69,13 @@ $ sbt run
 Documentation server started, you can now view the docs by going to http://0:0:0:0:0:0:0:0:9000
 ```
 
-Now open <http://localhost:9000> in your browser.  You should be able to see the default Play documentation.  It's time to translate your first page.
+Now open <http://localhost:9000/> in your browser.  You should be able to see the default Play documentation.  It's time to translate your first page.
 
 Copy a markdown page from the Play repository into your project.  It is important to ensure that the directory structure in your project matches the directory in Play, this will ensure that the code samples work.
 
 For example, if you choose to start with `manual/scalaGuide/main/http/ScalaActions.md`, then you need to ensure that it is in `manual/scalaGuide/main/http/ScalaActions.md` in your project.
 
-> **Note:** It may be tempting to start by copying the entire Play manual into your project.  If you do do this, make sure you only copy the markdown files, that you don't copy the code samples as well.  If you copy the code samples, they will override the code samples from Play, and you will lose the benefit of having those code samples automatically maintained for you.
+> **Note:** It may be tempting to start by copying the entire Play manual into your project.  If you do this, make sure you only copy the markdown files, that you don't copy the code samples as well.  If you copy the code samples, they will override the code samples from Play, and you will lose the benefit of having those code samples automatically maintained for you.
 
 Now you can start translating the file.
 
@@ -89,7 +89,7 @@ The Play documentation is full of code samples.  As described in the [[Documenta
 
 Generally, you will want to leave these snippets as is in your translation, this will ensure that the code snippets your translation stays up to date with Play.
 
-In some situations, it may make sense to override them.  You can either do this by putting the code directly in the documentation, using a fenced block, or by extracting them into your projects own compile code samples.  If you do that, checkout the Play documentation sbt build files for how you might setup SBT to compile them.
+In some situations, it may make sense to override them.  You can either do this by putting the code directly in the documentation, using a fenced block, or by extracting them into your projects own compile code samples.  If you do that, checkout the Play documentation sbt build files for how you might setup sbt to compile them.
 
 ## Validating the documentation
 

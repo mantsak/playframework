@@ -1,84 +1,63 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
+
 package scalaguide.async.scalacomet
 
-import play.api.mvc._
-import play.api.libs.iteratee.{Enumeratee, Iteratee, Enumerator}
-import play.api.test._
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+//#comet-imports
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import play.api.http.ContentTypes
 import play.api.libs.Comet
+import play.api.libs.json._
+import play.api.mvc._
+//#comet-imports
 
-object ScalaCometSpec extends PlaySpecification with Controller {
+import play.api.test._
 
-  "play comet" should {
-
-    "allow manually sending comet messages" in new WithApplication() {
-      //#manual
-      def comet = Action {
-        val events = Enumerator(
-          """<script>console.log('kiki')</script>""",
-          """<script>console.log('foo')</script>""",
-          """<script>console.log('bar')</script>"""
-        )
-        Ok.chunked(events).as(HTML)
-      }
-      //#manual
-      val msgs = cometMessages(comet(FakeRequest()))
-      msgs must haveLength(3)
-      msgs(0) must_== """<script>console.log('kiki')</script>"""
-    }
-
-    "allow a smarter way of manually sending comet messages" in new WithApplication() {
-      //#enumeratee
-      import play.twirl.api.Html
-
-      // Transform a String message into an Html script tag
-      val toCometMessage = Enumeratee.map[String] { data =>
-        Html("""<script>console.log('""" + data + """')</script>""")
-      }
-
-      def comet = Action {
-        val events = Enumerator("kiki", "foo", "bar")
-        Ok.chunked(events &> toCometMessage)
-      }
-      //#enumeratee
-
-      val msgs = cometMessages(comet(FakeRequest()))
-      msgs must haveLength(3)
-      msgs(0) must_== """<script>console.log('kiki')</script>"""
-    }
-
-    "allow using the comet helper" in new WithApplication() {
-      //#helper
-      def comet = Action {
-        val events = Enumerator("kiki", "foo", "bar")
-        Ok.chunked(events &> Comet(callback = "console.log"))
-      }
-      //#helper
-
-      val msgs = cometMessages(comet(FakeRequest()))
-      msgs must haveLength(4)
-      msgs(1) must contain("console.log('kiki')")
-    }
-
-    "allow using a forever iframe" in new WithApplication() {
-      //#iframe
-      def comet = Action {
-        val events = Enumerator("kiki", "foo", "bar")
-        Ok.chunked(events &> Comet(callback = "parent.cometMessage"))
-      }
-      //#iframe
-
-      val msgs = cometMessages(comet(FakeRequest()))
-      msgs must haveLength(4)
-      msgs(1) must contain("parent.cometMessage('kiki')")
-    }
-
+class MockController(val controllerComponents: ControllerComponents)(implicit materializer: Materializer)
+    extends BaseController {
+  //#comet-string
+  def cometString = Action {
+    implicit val m                      = materializer
+    def stringSource: Source[String, _] = Source(List("kiki", "foo", "bar"))
+    Ok.chunked(stringSource.via(Comet.string("parent.cometMessage"))).as(ContentTypes.HTML)
   }
+  //#comet-string
 
-  def cometMessages(result: Future[Result]):Seq[String] = {
-    await(await(result).body &> Results.dechunk |>>> Iteratee.getChunks).map(bytes => new String(bytes))
+  //#comet-json
+  def cometJson = Action {
+    implicit val m                     = materializer
+    def jsonSource: Source[JsValue, _] = Source(List(JsString("jsonString")))
+    Ok.chunked(jsonSource.via(Comet.json("parent.cometMessage"))).as(ContentTypes.HTML)
+  }
+  //#comet-json
+}
+
+class ScalaCometSpec extends PlaySpecification {
+  "play comet" should {
+    "work with string" in new WithApplication() with Injecting {
+      try {
+        val controllerComponents = inject[ControllerComponents]
+        val controller           = new MockController(controllerComponents)
+        val result               = controller.cometString.apply(FakeRequest())
+        contentAsString(result) must contain(
+          "<html><body><script>parent.cometMessage('kiki');</script><script>parent.cometMessage('foo');</script><script>parent.cometMessage('bar');</script>"
+        )
+      } finally {
+        app.stop()
+      }
+    }
+
+    "work with json" in new WithApplication() with Injecting {
+      try {
+        val controllerComponents = inject[ControllerComponents]
+        val controller           = new MockController(controllerComponents)
+        val result               = controller.cometJson.apply(FakeRequest())
+        contentAsString(result) must contain("<html><body><script>parent.cometMessage(\"jsonString\");</script>")
+      } finally {
+        app.stop()
+      }
+    }
   }
 }
